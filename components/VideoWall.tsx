@@ -32,7 +32,9 @@ type TileLayout = {
 };
 
 const MIN_TILE_WIDTH = 272;
-const MAX_COLUMNS = 5;
+const MAX_COLUMNS = 12;
+const MIN_FRAME_WIDTH = 240;
+const MAX_FRAME_WIDTH = 560;
 const TILE_ASPECT = 16 / 10;
 const FALLBACK_WIDTH = 1200;
 
@@ -76,6 +78,21 @@ export default function VideoWall({ videos }: { videos: Video[] }) {
   const [active, setActive] = useState<ActiveVideo | null>(null);
   // True from the first width change of a drag until 200ms after the last one.
   const [resizing, setResizing] = useState(false);
+  // null keeps the wall edge-to-edge; a number pins every frame to that width.
+  const [frameWidth, setFrameWidth] = useState<number | null>(null);
+  const [adjusting, setAdjusting] = useState(false);
+  const sizeSettle = useRef(0);
+
+  useEffect(() => {
+    return () => window.clearTimeout(sizeSettle.current);
+  }, []);
+
+  const changeFrameWidth = useCallback((value: number) => {
+    setFrameWidth(value);
+    setAdjusting(true);
+    window.clearTimeout(sizeSettle.current);
+    sizeSettle.current = window.setTimeout(() => setAdjusting(false), 220);
+  }, []);
 
   useIsomorphicLayoutEffect(() => {
     const wall = wallRef.current;
@@ -149,15 +166,47 @@ export default function VideoWall({ videos }: { videos: Video[] }) {
     return () => cancelAnimationFrame(frame);
   }, [metrics.measured]);
 
-  const columns = columnsFor(metrics.width, metrics.gap);
-  const cardWidth = Math.max(
-    0,
-    (metrics.width - metrics.gap * (columns - 1)) / columns,
+  // The slider can pin a frame width; otherwise the wall fills its container.
+  // The slider's range follows the available width so it never overflows on
+  // narrow screens.
+  const sliderMax = Math.min(
+    MAX_FRAME_WIDTH,
+    Math.max(MIN_FRAME_WIDTH, Math.round(metrics.width)),
   );
+  const sliderMin = Math.min(MIN_FRAME_WIDTH, sliderMax);
+  const activeFrameWidth =
+    frameWidth === null
+      ? null
+      : Math.min(Math.max(frameWidth, sliderMin), sliderMax);
+
+  const columns = activeFrameWidth
+    ? Math.max(
+        1,
+        Math.floor(
+          (metrics.width + metrics.gap + 0.5) /
+            (activeFrameWidth + metrics.gap),
+        ),
+      )
+    : columnsFor(metrics.width, metrics.gap);
+  const cardWidth = activeFrameWidth
+    ? Math.min(
+        activeFrameWidth,
+        (metrics.width - metrics.gap * (columns - 1)) / columns,
+      )
+    : Math.max(
+        0,
+        (metrics.width - metrics.gap * (columns - 1)) / columns,
+      );
   const cardHeight = cardWidth / TILE_ASPECT;
   const rows = Math.max(1, Math.ceil(videos.length / columns));
   const wallHeight =
     videos.length > 0 ? rows * cardHeight + (rows - 1) * metrics.gap : 0;
+
+  const shownFrameWidth = Math.round(cardWidth);
+  const sliderValue = Math.min(
+    Math.max(shownFrameWidth, sliderMin),
+    sliderMax,
+  );
 
   const layout: TileLayout[] = videos.map((_, index) => {
     const row = Math.floor(index / columns);
@@ -295,7 +344,31 @@ export default function VideoWall({ videos }: { videos: Video[] }) {
 
           <div className="wall-bar">
             <span className="wall-label">01 / The wall</span>
-            <span className="wall-hint">Click a frame to step inside</span>
+            <div className="wall-tools">
+              <label className="frame-control">
+                <span className="frame-label">
+                  <span className="frame-label-prefix">Frame </span>size
+                </span>
+                <input
+                  className="frame-slider"
+                  type="range"
+                  min={sliderMin}
+                  max={sliderMax}
+                  step={2}
+                  value={sliderValue}
+                  onChange={(event) =>
+                    changeFrameWidth(Number(event.target.value))
+                  }
+                  aria-label="Frame size"
+                  aria-valuetext={`${shownFrameWidth} pixels`}
+                />
+                <output className="frame-value">
+                  {shownFrameWidth}
+                  <span>px</span>
+                </output>
+              </label>
+              <span className="wall-hint">Click a frame to step inside</span>
+            </div>
           </div>
 
           {hasVideos ? (
@@ -303,6 +376,7 @@ export default function VideoWall({ videos }: { videos: Video[] }) {
               className="wall"
               ref={wallRef}
               data-ready={layoutReady ? "true" : "false"}
+              data-adjusting={adjusting ? "true" : undefined}
               style={{ height: wallHeight || undefined }}
             >
               {videos.map((video, index) => {
@@ -323,7 +397,7 @@ export default function VideoWall({ videos }: { videos: Video[] }) {
                       index={index}
                       hidden={active?.index === index}
                       paused={active !== null}
-                      suspended={resizing}
+                      suspended={resizing || adjusting}
                       onOpen={openVideo}
                       registerRef={registerRef}
                     />

@@ -14,7 +14,6 @@
   --radius: 20px;
   --gap: clamp(12px, 1.5vw, 20px);
   --page-pad: clamp(18px, 3.2vw, 52px);
-  --max-width: 1720px;
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
@@ -129,7 +128,6 @@ body[data-resizing="true"] .live-dot {
   position: relative;
   z-index: 1;
   width: 100%;
-  max-width: var(--max-width);
   margin: 0 auto;
   padding: 0 var(--page-pad) clamp(48px, 6vw, 80px);
 }
@@ -355,6 +353,95 @@ body[data-resizing="true"] .live-dot {
   box-shadow: 0 0 9px rgba(217, 244, 95, 0.9);
 }
 
+/* Frame-size control ------------------------------------------------------- */
+
+.wall-tools {
+  display: flex;
+  align-items: center;
+  gap: clamp(18px, 2.4vw, 34px);
+  min-width: 0;
+}
+
+.frame-control {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.frame-label {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 9px;
+  letter-spacing: 0.17em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--ink-dim);
+}
+
+.frame-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: clamp(96px, 12vw, 180px);
+  height: 20px;
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  cursor: ew-resize;
+}
+
+.frame-slider::-webkit-slider-runnable-track {
+  height: 1px;
+  border-radius: 1px;
+  background: var(--line-strong);
+}
+
+.frame-slider::-moz-range-track {
+  height: 1px;
+  border-radius: 1px;
+  background: var(--line-strong);
+}
+
+.frame-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 9px;
+  height: 9px;
+  margin-top: -4px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 3px rgba(217, 244, 95, 0.13);
+}
+
+.frame-slider::-moz-range-thumb {
+  width: 9px;
+  height: 9px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 3px rgba(217, 244, 95, 0.13);
+}
+
+.frame-slider:focus-visible {
+  outline: 1px solid var(--accent);
+  outline-offset: 5px;
+  border-radius: 999px;
+}
+
+.frame-value {
+  min-width: 34px;
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  text-align: right;
+  color: var(--ink-dim);
+  font-variant-numeric: tabular-nums;
+}
+
+.frame-value span {
+  margin-left: 2px;
+  color: var(--ink-faint);
+}
+
 /* Wall --------------------------------------------------------------------- */
 
 .wall {
@@ -380,6 +467,13 @@ body[data-resizing="true"] .live-dot {
     transform 0.55s var(--ease-out),
     width 0.55s var(--ease-out),
     height 0.55s var(--ease-out);
+}
+
+/* While the frame-size slider is moving, respond quickly instead of trailing
+   the pointer by half a second. The long morph returns on release. */
+.wall[data-adjusting="true"],
+.wall[data-adjusting="true"] .tile-slot {
+  transition-duration: 0.16s;
 }
 
 .tile {
@@ -961,6 +1055,22 @@ body[data-resizing="true"] .live-dot {
 
   .wall-hint {
     display: none;
+  }
+
+  .wall-tools {
+    gap: 12px;
+  }
+
+  .frame-label {
+    display: inline;
+  }
+
+  .frame-label-prefix {
+    display: none;
+  }
+
+  .frame-slider {
+    width: clamp(90px, 28vw, 140px);
   }
 
   .wall-bar {

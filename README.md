@@ -92,10 +92,15 @@ ffmpeg -i input.mov \
 ## How the motion works
 
 - **Responsive layout.** The wall is absolutely positioned and measured in JS.
-  Column count is derived from the container width (min tile 272 px, max 5
-  columns) and rows — including the last one — are centered. The layout uses
-  explicit widths/heights plus `translate3d`, with CSS transitions, so a window
-  resize visibly glides and morphs tiles into their new rows instead of snapping.
+  It spans the full window width (no page max-width), with up to 12 columns on
+  ultrawide screens. Rows — including the last one — are centered. The layout
+  uses explicit widths/heights plus `translate3d`, with CSS transitions, so a
+  window resize visibly glides and morphs tiles into their new rows instead of
+  snapping.
+- **Frame-size slider.** The control in the wall bar pins every frame to a width
+  from 240–560 px (clamped to the available width on small screens). Columns
+  reflow around that size and rows stay centered. During a drag the transitions
+  shorten and playback pauses; both return to normal when the drag settles.
 - **Full-screen morph.** On click, the tile's viewport rect is measured and a
   Motion spring animates the frame's position, width and height from that exact
   rect to an inset full-screen box. The radius comes from the same `--radius`
@@ -113,8 +118,9 @@ ffmpeg -i input.mov \
 | --- | --- |
 | Corner radius | `--radius` in `app/globals.css` |
 | Min tile width / max columns | `MIN_TILE_WIDTH`, `MAX_COLUMNS` in `components/VideoWall.tsx` |
+| Slider range | `MIN_FRAME_WIDTH`, `MAX_FRAME_WIDTH` in `components/VideoWall.tsx` |
 | Tile aspect ratio | `TILE_ASPECT` in `components/VideoWall.tsx` |
-| Page width, gap, colours | `app/globals.css` (`--max-width`, `--gap`, tokens) |
+| Page padding, gap, colours | `app/globals.css` (`--page-pad`, `--gap`, tokens) |
 | Title/description, fonts | `app/layout.tsx` |
 | Motion timings | `components/Lightbox.tsx`, `components/VideoTile.tsx` |
 
@@ -146,8 +152,9 @@ public/posters/      generated poster JPEGs
 ## Checks run
 
 - `npm run build` and `npx tsc --noEmit` pass.
-- Verified at 1720, 1440, 760 and 390 px widths (5, 4, 2 and 1 columns) with no
-  horizontal overflow.
+- Verified at 3440, 1720, 1440, 760 and 390 px widths (11/12, 5, 4, 2 and 1
+  columns) with no horizontal overflow, plus slider sizes from 240–560 px.
+- Slider drags pause playback and shorten transitions; release restores both.
 - Resize sampled frame-by-frame: tiles interpolate position and size rather than
   snapping.
 - Lightbox: opens from the clicked rect, pauses the wall, locks scroll, traps

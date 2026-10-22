@@ -48,9 +48,9 @@ const mono = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "Still / Moving — a wall of quiet loops",
+  title: "Still / Moving — a wall of quiet loops and stills",
   description:
-    "A silent video wall. Every film plays at once, muted and looping. Click a frame to step inside.",
+    "A silent wall of films and stills. Every clip plays at once, muted and looping. Click a frame to step inside.",
 };
 
 export default function RootLayout({

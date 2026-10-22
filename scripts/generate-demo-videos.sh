@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Generates a set of lightweight, silent, looping demo films for the gallery.
-# These are placeholders: drop your own .mp4 files into public/videos and they
-# will appear automatically alongside (or instead of) these.
+# These are placeholders: drop your own files into public/media and they will
+# appear automatically alongside (or instead of) these.
 #
 # Each film is a single soft light field (a still gradient), then given a very
 # slow breathing zoom and parallax drift with zoompan, plus 35mm grain and a
@@ -13,7 +13,7 @@
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
-mkdir -p public/videos public/posters
+mkdir -p public/media public/posters
 
 W=1280
 H=800
@@ -45,7 +45,7 @@ films=(
 phase=0
 for film in "${films[@]}"; do
   IFS='|' read -r name c0 c1 c2 type x0 y0 x1 y1 <<< "$film"
-  out="public/videos/${name}.mp4"
+  out="public/media/${name}.mp4"
 
   if [[ -f "$out" && "${FORCE:-0}" != "1" ]]; then
     echo "skip  ${out}"

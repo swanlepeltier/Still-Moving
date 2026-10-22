@@ -469,7 +469,7 @@ body[data-resizing="true"] .live-dot {
     height 0.55s var(--ease-out);
 }
 
-/* While the frame-size slider is moving, respond quickly instead of trailing
+/* While the row-height slider is moving, respond quickly instead of trailing
    the pointer by half a second. The long morph returns on release. */
 .wall[data-adjusting="true"],
 .wall[data-adjusting="true"] .tile-slot {
@@ -485,6 +485,9 @@ body[data-resizing="true"] .live-dot {
   background: var(--surface);
   overflow: hidden;
   isolation: isolate;
+  /* Row layout gives tiles very different widths now, so captions respond to
+     the tile itself rather than the window. */
+  container-type: inline-size;
   box-shadow:
     0 1px 0 rgba(255, 255, 255, 0.05) inset,
     0 24px 60px -40px rgba(0, 0, 0, 0.95);
@@ -518,15 +521,16 @@ body[data-resizing="true"] .live-dot {
     radial-gradient(120% 90% at 30% 20%, #1b1b1e, #0b0b0c 70%);
 }
 
-/* Contain, never cover: the whole frame stays visible, and any mismatch with
-   the 16:10 tile settles onto the tile's dark ground instead of cropping. */
+/* Cover, not contain: each tile is laid out at its file's real aspect ratio,
+   so the frame fills it exactly — no bars, and no crop in practice. */
 .lazy-poster,
-.lazy-media {
+.lazy-media,
+.tile-image {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
-  object-fit: contain;
+  object-fit: cover;
 }
 
 .lazy-poster {
@@ -680,6 +684,41 @@ body[data-resizing="true"] .live-dot {
   outline-offset: 3px;
 }
 
+/* Portrait clips can be a fifth as wide as their neighbours. Give them their
+   own type scale and drop secondary copy before it swallows the frame. */
+@container (max-width: 240px) {
+  .tile-top {
+    inset: 10px 10px auto;
+  }
+
+  .tile-caption {
+    padding: 13px 12px 11px;
+  }
+
+  .tile-collection {
+    display: none;
+  }
+
+  .tile-title {
+    display: -webkit-box;
+    overflow: hidden;
+    font-size: 18px;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
+
+  .tile-meta {
+    display: none;
+  }
+}
+
+@container (max-width: 160px) {
+  .tile-index,
+  .tile-caption {
+    display: none;
+  }
+}
+
 /* Empty state -------------------------------------------------------------- */
 
 .empty-wall {
@@ -811,23 +850,31 @@ body[data-resizing="true"] .live-dot {
     0 48px 140px -28px rgba(0, 0, 0, 0.95);
   will-change: transform, width, height;
   transform-origin: 0 0;
+  /* Lets the caption react when a wide clip makes the frame very short. */
+  container-type: size;
 }
 
 .lightbox-poster,
-.lightbox-video {
+.lightbox-video,
+.lightbox-image {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
-  object-fit: contain;
+  /* The frame is already solved to the file's aspect, so cover cannot crop. */
+  object-fit: cover;
 }
 
 .lightbox-poster {
   z-index: 0;
 }
 
-.lightbox-video {
+.lightbox-video,
+.lightbox-image {
   z-index: 1;
+}
+
+.lightbox-video {
   opacity: 0;
   transition: opacity 0.5s ease;
 }
@@ -930,10 +977,10 @@ body[data-resizing="true"] .live-dot {
 .lightbox-caption {
   position: absolute;
   inset: auto 0 0;
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 24px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 14px 24px;
   padding: clamp(18px, 3vw, 34px);
   background: linear-gradient(
     to top,
@@ -978,6 +1025,8 @@ body[data-resizing="true"] .live-dot {
 .lightbox-actions {
   display: flex;
   align-items: center;
+  justify-content: flex-end;
+  align-self: end;
   gap: 9px;
   flex-shrink: 0;
   padding-bottom: 2px;
@@ -991,6 +1040,83 @@ body[data-resizing="true"] .live-dot {
   text-transform: uppercase;
   color: rgba(255, 255, 255, 0.38);
   white-space: nowrap;
+}
+
+.lightbox-scrubber {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  pointer-events: auto;
+  color: rgba(255, 255, 255, 0.62);
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 8.5px;
+  letter-spacing: 0.1em;
+  font-variant-numeric: tabular-nums;
+}
+
+.lightbox-time {
+  min-width: 3.5ch;
+  text-align: right;
+}
+
+.lightbox-time:last-child {
+  text-align: left;
+}
+
+.lightbox-range {
+  -webkit-appearance: none;
+  appearance: none;
+  flex: 1;
+  width: 100%;
+  height: 22px;
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.lightbox-range::-webkit-slider-runnable-track {
+  height: 1px;
+  border-radius: 1px;
+  background: rgba(255, 255, 255, 0.32);
+}
+
+.lightbox-range::-moz-range-track {
+  height: 1px;
+  border-radius: 1px;
+  background: rgba(255, 255, 255, 0.32);
+}
+
+.lightbox-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 11px;
+  height: 11px;
+  margin-top: -5px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 4px rgba(217, 244, 95, 0.13);
+}
+
+.lightbox-range::-moz-range-thumb {
+  width: 11px;
+  height: 11px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 4px rgba(217, 244, 95, 0.13);
+}
+
+.lightbox-range:focus-visible {
+  outline: 1px solid var(--accent);
+  outline-offset: 4px;
+  border-radius: 999px;
+}
+
+.lightbox-range:disabled {
+  opacity: 0.4;
+  cursor: default;
 }
 
 /* Entry animations --------------------------------------------------------- */
@@ -1054,16 +1180,22 @@ body[data-resizing="true"] .live-dot {
     display: none;
   }
 
+  .wall-label {
+    /* The row-height control needs the full bar on narrow screens. */
+    display: none;
+  }
+
+  .wall-bar {
+    justify-content: flex-end;
+    padding: 13px 0;
+  }
+
   .wall-tools {
     gap: 12px;
   }
 
   .frame-label {
     display: inline;
-  }
-
-  .frame-label-prefix {
-    display: none;
   }
 
   .frame-slider {
@@ -1102,12 +1234,19 @@ body[data-resizing="true"] .live-dot {
   }
 
   .lightbox-caption {
-    gap: 14px;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px 14px;
     padding: 16px 14px;
   }
 
   .lightbox-actions {
+    justify-self: start;
     gap: 7px;
+  }
+
+  .lightbox-scrubber {
+    grid-column: 1;
+    gap: 9px;
   }
 
   .lightbox-kicker {
@@ -1120,6 +1259,48 @@ body[data-resizing="true"] .live-dot {
   .tile-expand {
     opacity: 1;
     transform: none;
+  }
+}
+
+/* Short frames: a 21:9 clip on a phone is only ~125 px tall. Keep the controls
+   and timeline, drop the caption so nothing overlaps the close button. */
+@container (max-height: 300px) {
+  .lightbox-close {
+    top: 10px;
+    right: 10px;
+  }
+
+  .lightbox-close.icon-button {
+    width: 34px;
+    height: 34px;
+  }
+
+  .lightbox-caption {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 6px 10px;
+    padding: 9px 11px;
+  }
+
+  .lightbox-copy {
+    display: none;
+  }
+
+  .lightbox-actions {
+    grid-column: 1 / -1;
+  }
+
+  .lightbox-scrubber {
+    grid-column: 1 / -1;
+  }
+
+  .lightbox-center-play {
+    width: 54px;
+    height: 54px;
+  }
+
+  /* A still has nothing to scrub; its close button is the only chrome needed. */
+  .lightbox[data-kind="image"] .lightbox-caption {
+    display: none;
   }
 }
 

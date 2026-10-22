@@ -11,6 +11,8 @@ const nextConfig: NextConfig = {
     ];
 
     return [
+      { source: "/media/:path*", headers: mediaCache },
+      // Legacy folder, still scanned so existing checkouts keep working.
       { source: "/videos/:path*", headers: mediaCache },
       { source: "/posters/:path*", headers: mediaCache },
     ];

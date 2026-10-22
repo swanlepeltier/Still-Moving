@@ -55,8 +55,10 @@ Poster generation can be forced with `FORCE=1 npm run posters`.
 
 ### Recommended source format
 
-The wall crops every film to a 16:10 frame with `object-fit: cover`, so keep
-the interesting part of the image away from the edges. For a light, fast wall:
+The wall fits each film inside a 16:10 tile with `object-fit: contain`, so the
+whole frame stays visible: wider or taller films letterbox onto the tile's dark
+ground instead of being cropped. Full-screen view keeps the same treatment. For
+a light, fast wall:
 
 ```bash
 ffmpeg -i input.mov \

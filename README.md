@@ -37,7 +37,8 @@ optional media scripts (demo loops and posters).
    ```
 
 That's it. The folder is the single source of truth; there is no manifest to
-edit. Filenames become titles (`salt-flats.mp4` → “Salt Flats”). Sub-folders
+edit. Generated demo files are ignored by git; add your own films explicitly
+(or remove the `public/videos/*` rule in `.gitignore`). Filenames become titles (`salt-flats.mp4` → “Salt Flats”). Sub-folders
 are supported and shown as a collection label on the tile:
 
 ```text
@@ -67,8 +68,9 @@ ffmpeg -i input.mov \
 
 - 1080p or smaller, 8–15 seconds, H.264 + `faststart`, ideally under 5 MB.
 - Muted clips save bytes; the wall is silent by default anyway.
-- The demo loops in this repo are ~190 KB each, generated locally with
-  `npm run demo:media` (requires `ffmpeg`).
+- Demo loops are not versioned: generate them locally with
+  `npm run demo:media` (requires `ffmpeg`). They are ~190 KB each. The
+  matching posters are committed so the wall still paints instantly.
 
 ## What is optimised
 
@@ -137,7 +139,7 @@ lib/videos.ts       filesystem scan, titles, poster lookup
 scripts/
   generate-demo-videos.sh   optional demo loops (ffmpeg)
   make-posters.mjs          poster frames for every video
-public/videos/       your films (12 demo loops included)
+public/videos/       your films (demo loops generated on demand)
 public/posters/      generated poster JPEGs
 ```
 

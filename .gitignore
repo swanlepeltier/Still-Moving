@@ -5,3 +5,8 @@ out
 *.log
 *.tsbuildinfo
 AGENTS.md
+
+# Generated demo loops stay local (npm run demo:media). The posters are kept so
+# a fresh checkout still has the gallery's poster-first assets.
+/public/videos/*
+!/public/videos/.gitkeep

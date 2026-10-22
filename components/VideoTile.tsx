@@ -13,6 +13,8 @@ type VideoTileProps = {
   index: number;
   hidden: boolean;
   paused: boolean;
+  /** The wall is being resized; freeze playback so decoding cannot compete with layout. */
+  suspended: boolean;
   onOpen: (index: number, element: HTMLButtonElement) => void;
   registerRef: (id: string, element: HTMLButtonElement | null) => void;
 };
@@ -22,6 +24,7 @@ export default function VideoTile({
   index,
   hidden,
   paused,
+  suspended,
   onOpen,
   registerRef,
 }: VideoTileProps) {
@@ -56,6 +59,7 @@ export default function VideoTile({
           src={video.src}
           poster={video.poster}
           paused={paused}
+          suspended={suspended}
           className="tile-video"
         />
         <span className="tile-veil" aria-hidden="true" />

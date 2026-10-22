@@ -96,16 +96,33 @@ code {
   }
 }
 
-/* 35mm grain, laid over the whole frame. */
+/* 35mm grain, laid over the whole frame.
+   Plain alpha instead of mix-blend-mode: soft-light — the blend mode forced a
+   full-viewport blend pass on every resize frame, and at this opacity the two
+   are visually indistinguishable. The layer is also dropped outright while the
+   window is being dragged (see [data-resizing] below). */
 body::after {
   content: "";
   position: fixed;
   inset: 0;
   z-index: 2000;
   pointer-events: none;
-  opacity: 0.045;
-  mix-blend-mode: soft-light;
+  opacity: 0.026;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.82' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)' opacity='0.6'/%3E%3C/svg%3E");
+  background-size: 180px 180px;
+  transition: opacity 0.18s linear;
+}
+
+/* While a resize drag is in flight the grain, the ambient drift and the live
+   pill stop repainting full-screen layers. Everything is back 200ms after the
+   drag settles. */
+body[data-resizing="true"]::after {
+  opacity: 0;
+}
+
+body[data-resizing="true"] .ambient,
+body[data-resizing="true"] .live-dot {
+  animation-play-state: paused;
 }
 
 .site-shell {
@@ -353,7 +370,9 @@ body::after {
   position: absolute;
   top: 0;
   left: 0;
-  will-change: transform, width, height;
+  /* Keep each slot's layout and style work local. No paint containment: the
+     tile's drop shadow has to spill outside the slot. */
+  contain: layout style;
 }
 
 .tile-slot[data-ready="true"] {
@@ -469,9 +488,10 @@ body::after {
   padding: 4px 8px 3px;
   border: 1px solid rgba(255, 255, 255, 0.16);
   border-radius: 999px;
-  background: rgba(6, 6, 7, 0.28);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  /* Was backdrop-filter: blur(10px) — 12 of those plus 12 on .tile-expand were
+     the most expensive thing on the wall during a resize. A translucent fill
+     reads the same at this size. */
+  background: rgba(6, 6, 7, 0.58);
   font-family: var(--font-mono), ui-monospace, monospace;
   font-size: 9px;
   letter-spacing: 0.12em;
@@ -485,9 +505,7 @@ body::after {
   height: 34px;
   border: 1px solid rgba(255, 255, 255, 0.18);
   border-radius: 50%;
-  background: rgba(6, 6, 7, 0.32);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background: rgba(6, 6, 7, 0.6);
   color: var(--ink);
   opacity: 0;
   transform: translateY(-5px) scale(0.94);

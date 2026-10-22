@@ -8,6 +8,8 @@ type LazyVideoProps = {
   poster: string | null;
   /** Pause everything while the full-screen view is open. */
   paused: boolean;
+  /** Pause while the wall is mid-resize; the current frame stays on screen. */
+  suspended?: boolean;
   className?: string;
 };
 
@@ -17,6 +19,10 @@ type LazyVideoProps = {
  * - Nothing is downloaded until the tile is within half a screen.
  * - Playback is limited to videos actually on screen; everything else pauses.
  * - Posters cover the gap while a file is fetched.
+ * - A resize drag pauses playback: every tile is being rescaled at once, and
+ *   asking the decoder to keep up with eight of them is what makes the whole
+ *   window feel stuck. Pausing freezes the last decoded frame in place, so the
+ *   tiles still glide, and it resumes ~200ms after the drag stops.
  * - With reduced motion enabled, the tile stays a still image; the full-screen
  *   view offers a play control instead.
  */
@@ -24,6 +30,7 @@ export default function LazyVideo({
   src,
   poster,
   paused,
+  suspended = false,
   className,
 }: LazyVideoProps) {
   const hostRef = useRef<HTMLDivElement>(null);
@@ -69,7 +76,7 @@ export default function LazyVideo({
     const video = videoRef.current;
     if (!video) return;
 
-    const shouldPlay = shouldLoad && inView && !paused && !reducedMotion;
+    const shouldPlay = shouldLoad && inView && !paused && !suspended && !reducedMotion;
     if (!shouldPlay) {
       video.pause();
       return;
@@ -82,7 +89,7 @@ export default function LazyVideo({
     resume();
     document.addEventListener("visibilitychange", resume);
     return () => document.removeEventListener("visibilitychange", resume);
-  }, [shouldLoad, inView, paused, reducedMotion]);
+  }, [shouldLoad, inView, paused, suspended, reducedMotion]);
 
   return (
     <div ref={hostRef} className={`lazy-video ${className ?? ""}`}>

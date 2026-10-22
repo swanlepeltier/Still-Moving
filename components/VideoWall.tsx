@@ -74,12 +74,35 @@ export default function VideoWall({ videos }: { videos: Video[] }) {
   });
   const [layoutReady, setLayoutReady] = useState(false);
   const [active, setActive] = useState<ActiveVideo | null>(null);
+  // True from the first width change of a drag until 200ms after the last one.
+  const [resizing, setResizing] = useState(false);
 
   useIsomorphicLayoutEffect(() => {
     const wall = wallRef.current;
     if (!wall) return;
 
     let frame = 0;
+    let settle = 0;
+    let lastWidth = 0;
+    let flagged = false;
+
+    const endResizing = () => {
+      flagged = false;
+      setResizing(false);
+      delete document.body.dataset.resizing;
+    };
+
+    const markResizing = () => {
+      if (!flagged) {
+        flagged = true;
+        setResizing(true);
+        // Read by CSS to park full-screen decorative layers.
+        document.body.dataset.resizing = "true";
+      }
+      window.clearTimeout(settle);
+      settle = window.setTimeout(endResizing, 200);
+    };
+
     const measure = () => {
       frame = 0;
       const width = wall.getBoundingClientRect().width;
@@ -97,7 +120,12 @@ export default function VideoWall({ videos }: { videos: Video[] }) {
       });
     };
 
-    const observer = new ResizeObserver(() => {
+    const observer = new ResizeObserver((entries) => {
+      const width = entries[0]?.contentRect.width ?? wall.getBoundingClientRect().width;
+      // Only a width change re-lays-out and rescales the tiles (and therefore
+      // the videos); a height-only resize needs no media work.
+      if (lastWidth && Math.abs(width - lastWidth) > 0.5) markResizing();
+      lastWidth = width;
       if (frame) cancelAnimationFrame(frame);
       frame = requestAnimationFrame(measure);
     });
@@ -108,6 +136,8 @@ export default function VideoWall({ videos }: { videos: Video[] }) {
     return () => {
       observer.disconnect();
       if (frame) cancelAnimationFrame(frame);
+      window.clearTimeout(settle);
+      delete document.body.dataset.resizing;
     };
   }, []);
 
@@ -293,6 +323,7 @@ export default function VideoWall({ videos }: { videos: Video[] }) {
                       index={index}
                       hidden={active?.index === index}
                       paused={active !== null}
+                      suspended={resizing}
                       onOpen={openVideo}
                       registerRef={registerRef}
                     />

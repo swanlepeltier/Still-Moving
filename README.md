@@ -38,8 +38,8 @@ optional media scripts (demo loops and posters).
 
 That's it. The folder is the single source of truth; there is no manifest to
 edit. Generated demo files are ignored by git; add your own films explicitly
-(or remove the `public/videos/*` rule in `.gitignore`). Filenames become titles (`salt-flats.mp4` → “Salt Flats”). Sub-folders
-are supported and shown as a collection label on the tile:
+(or remove the `public/videos/*` rule in `.gitignore`). Filenames become titles (`salt-flats.mp4` → “Salt Flats”). Sub-folders at
+any depth are scanned automatically and shown as a collection label on the tile:
 
 ```text
 public/videos/

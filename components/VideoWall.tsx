@@ -412,7 +412,7 @@ export default function VideoWall({ videos }: { videos: Video[] }) {
               <p className="empty-copy">
                 Drop a <code>.mp4</code> or <code>.webm</code> into{" "}
                 <code>public/videos</code>, then reload. Every file in that
-                folder joins the wall automatically.
+                folder and its subfolders joins the wall automatically.
               </p>
               <code className="empty-command">npm run posters</code>
             </div>
